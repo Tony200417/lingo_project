@@ -1,0 +1,5 @@
+{
+  "name": "LingoFast",
+  "description": "Una plataforma didáctica y rápida para aprender inglés y portugués con tutoría de IA.",
+  "requestFramePermissions": ["microphone"]
+}

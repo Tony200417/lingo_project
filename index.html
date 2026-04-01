@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LingoFast - Aprende Inglés y Portugués</title>
+    <script>
+      // Fix for libraries that try to polyfill fetch on the global object
+      try {
+        if (typeof global === 'undefined') {
+          window.global = Object.create(window);
+        }
+        // If fetch is a getter and read-only, we try to define it with a dummy setter to prevent errors
+        const originalFetch = window.fetch;
+        try {
+          Object.defineProperty(window, 'fetch', {
+            get: () => originalFetch,
+            set: (v) => { console.warn('Blocked attempt to overwrite fetch:', v); },
+            configurable: true
+          });
+        } catch (e) {
+          // If we can't define it on window, try the prototype
+          Object.defineProperty(Object.getPrototypeOf(window), 'fetch', {
+            get: () => originalFetch,
+            set: (v) => { console.warn('Blocked attempt to overwrite fetch on prototype:', v); },
+            configurable: true
+          });
+        }
+      } catch (e) {
+        console.warn('Could not polyfill global/fetch:', e);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

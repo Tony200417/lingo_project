@@ -1,0 +1,21 @@
+{
+  "entities": {
+    "progress": {
+      "title": "User Progress",
+      "description": "Stores the lessons completed by each user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The username of the student." },
+        "completedLessons": { "type": "array", "items": { "type": "string" }, "description": "List of lesson IDs completed." },
+        "lastUpdated": { "type": "string", "format": "date-time", "description": "Last time the progress was saved." }
+      },
+      "required": ["userId", "completedLessons"]
+    }
+  },
+  "firestore": {
+    "/progress/{userId}": {
+      "schema": "progress",
+      "description": "Collection of user progress documents."
+    }
+  }
+}
