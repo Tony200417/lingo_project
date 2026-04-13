@@ -1,0 +1,9 @@
+node_modules
+dist
+.git
+.env
+README.md
+Dockerfile
+.dockerignore
+package-lock.json
+# Add anything else that is not needed in the production image

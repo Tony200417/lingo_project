@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { LingoIcon } from './LingoIcon';
-import { GoogleGenAI } from "@google/genai";
+// GoogleGenAI import removed as logic is now handled in the secure backend proxy
 
 interface ChatTutorProps {
   language: Language;
@@ -91,24 +91,26 @@ export function ChatTutor({ language }: ChatTutorProps) {
       });
 
       if (!response.ok) {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json();
-          throw new Error(errorData.code || errorData.error || 'Failed to connect to tutor');
-        } else {
-          const text = await response.text();
-          if (response.status === 503 || response.status === 504) {
-            throw new Error('SERVICE_UNAVAILABLE');
+        let errorData;
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            errorData = await response.json();
+          } else {
+            const text = await response.text();
+            console.error('Non-JSON error response:', text);
+            throw new Error(`Server error (${response.status})`);
           }
-          throw new Error(`Server error (${response.status}): ${text.substring(0, 50)}...`);
+        } catch (e) {
+          throw new Error('Failed to connect to tutor');
         }
+        throw new Error(errorData?.code || errorData?.error || 'Failed to connect to tutor');
       }
 
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('Non-JSON response:', text);
-        throw new Error('El servidor respondió en un formato inesperado. Por favor, intenta de nuevo.');
+        console.error('Non-JSON response received');
+        throw new Error('El servidor respondió en un formato inesperado.');
       }
 
       const data = await response.json();

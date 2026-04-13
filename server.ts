@@ -3,7 +3,7 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import cors from "cors";
 import dotenv from "dotenv";
 
@@ -69,41 +69,38 @@ async function startServer() {
 
   // Real API Chat endpoint (Server-side Gemini)
   app.post("/api/chat", async (req, res) => {
-    const { message, language } = req.body;
-    
-    if (!message) {
-      return res.status(400).json({ error: "Message is required" });
-    }
-
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.API_KEY;
-    
-    if (!apiKey || apiKey.includes('YOUR_') || apiKey.includes('TODO')) {
-      return res.status(500).json({ 
-        error: "La clave de API de Gemini no está configurada correctamente en el servidor.",
-        code: "API_KEY_MISSING"
-      });
-    }
-
-    const ai = new GoogleGenAI({ apiKey: apiKey });
-
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: `System Instruction: You are a friendly and encouraging language tutor for ${language === 'en' ? 'English' : 'Portuguese'}. 
-            Your goal is to help the user learn the language through conversation. 
-            Correct their mistakes gently, explain grammar points when relevant, and suggest new vocabulary. 
-            Keep your responses concise and didactic. 
-            Always respond in the target language (${language === 'en' ? 'English' : 'Portuguese'}) but you can provide translations in Spanish if the user seems confused.
-            
-            User Message: ${message}` }]
-          }
-        ],
-      });
+      const { message, language } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
 
-      res.json({ text: response.text });
+      const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.API_KEY;
+      
+      if (!apiKey || apiKey.includes('YOUR_') || apiKey.includes('TODO')) {
+        return res.status(500).json({ 
+          error: "La clave de API de Gemini no está configurada correctamente en el servidor.",
+          code: "API_KEY_MISSING"
+        });
+      }
+
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+
+      const prompt = `System Instruction: You are a friendly and encouraging language tutor for ${language === 'en' ? 'English' : 'Portuguese'}. 
+      Your goal is to help the user learn the language through conversation. 
+      Correct their mistakes gently, explain grammar points when relevant, and suggest new vocabulary. 
+      Keep your responses concise and didactic. 
+      Always respond in the target language (${language === 'en' ? 'English' : 'Portuguese'}) but you can provide translations in Spanish if the user seems confused.
+      
+      User Message: ${message}`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      res.json({ text: text });
     } catch (error: any) {
       console.error("Gemini API Error:", error);
       res.status(500).json({ 
